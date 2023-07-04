@@ -1,0 +1,13 @@
+version: '3'
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql-integration-tests
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourPassword123
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./Scripts/SQLServer:/scripts
+      # Add a volume to mount the SQL script directory
