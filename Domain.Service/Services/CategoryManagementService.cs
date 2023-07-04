@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using Domain.Interfaces.Repository;
 using Domain.Interfaces.Service;
 using Domain.Models;
 using Microsoft.Extensions.Logging;
@@ -11,6 +10,9 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Infra.SqlServer.Context;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Runtime.InteropServices;
 
 namespace Domain.Service.Service
 {
@@ -18,7 +20,8 @@ namespace Domain.Service.Service
     {
         private readonly SqlServerContext sqlServerContext;
         private readonly ILogger<CategoryManagementService> logger;
-
+        private static int INITIAL_LEVEL = 1;
+        
         public CategoryManagementService(
             SqlServerContext sqlServerContext,
             ILogger<CategoryManagementService> logger)
@@ -27,85 +30,107 @@ namespace Domain.Service.Service
             this.logger = logger;
         }
 
-        public async Task Create(Dictionary<string, string> categoryDictionary)
+        public async Task CreateCategory(Dictionary<string, string> categoryDictionary)
+        {
+            var executionStrategy = sqlServerContext.Database.CreateExecutionStrategy();
+
+            executionStrategy.Execute(()=> 
+            {
+                using var transaction = sqlServerContext.Database.BeginTransaction();
+
+                Create(categoryDictionary);
+                
+                transaction.Commit();
+            });
+        }
+
+        public void Create(Dictionary<string, string> categoryDictionary)
         {
             foreach (var categoryEntry in categoryDictionary)
             {
-                var categoryName = categoryEntry.Key;
-                var parentCategoryName = categoryEntry.Value;
+                var parentCategoryName = categoryEntry.Key;
+                var childCategoryName = categoryEntry.Value;
 
-                var category = sqlServerContext.Categories.FirstOrDefault(c => c.Name == categoryName);
+                var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == parentCategoryName);
 
                 if (category == null)
                 {
-                    category = new CategoryEntity { Name = categoryName };
-                    sqlServerContext.Add(category);
+                    category = new CategoryEntity { CategoryName = parentCategoryName, Level = INITIAL_LEVEL };
                 }
 
-                if (!string.IsNullOrEmpty(parentCategoryName))
+                if (!string.IsNullOrEmpty(childCategoryName))
                 {
-                    var parentCategory = sqlServerContext.Categories.FirstOrDefault(c => c.Name == parentCategoryName);
-
-                    if (parentCategory == null)
+                    var newChild = new CategoryEntity
                     {
-                        parentCategory = new CategoryEntity { Name = parentCategoryName };
-                        sqlServerContext.Categories.Add(parentCategory);
-                    }
-
-                    var categoryHierarchy = new CategoryHierarchyEntity
-                    {
-                        ParentCategoryId = parentCategory.Id,
-                        ChildCategoryId = parentCategory.Id
+                        Level = category.NewLevel(),
+                        ParentCategoryId = category.CategoryId,
+                        CategoryName = childCategoryName
                     };
 
-                    sqlServerContext.CategoryHierarchies.Add(categoryHierarchy);
+                    category.AddNewChild(newChild);
+                }
+
+                sqlServerContext.Categories.Update(category);
+                sqlServerContext.SaveChanges();
+            }
+        }
+
+        public Dictionary<string, object> GetCategory(string categoryName)
+        {
+            var category = sqlServerContext.Categories
+                .Include(c => c.ChildCategories)
+                .FirstOrDefault(c => c.CategoryName == categoryName);
+
+
+            if (category == null)
+            {
+                return default;
+            }
+
+            var dictionarieCategories = new Dictionary<string, object>();
+
+            return CreateDictionaryCategory(dictionarieCategories, category);
+        }
+
+        public void AddParent(Dictionary<string, object> parent, CategoryEntity child)
+        {
+            var newParent = new Dictionary<string, object>();
+
+            parent.Add(child.CategoryName, newParent);
+
+            var category = sqlServerContext.Categories
+                .Include(c => c.ChildCategories)
+                .FirstOrDefault(c => c.ParentCategoryId == child.CategoryId);
+
+            if(category != null) 
+            {
+                AddParent(newParent, category);
+            }
+        }
+
+        private Dictionary<string, object> CreateDictionaryCategory(
+            Dictionary<string, object> dictionarieCategories,
+            CategoryEntity categoryEntity)
+        {
+
+            var parent = new Dictionary<string, object>();
+
+            dictionarieCategories.Add(categoryEntity.CategoryName, parent);
+
+            if (categoryEntity.ChildCategories != null && categoryEntity.ChildCategories.Any())
+            {
+                foreach (var child in categoryEntity.ChildCategories)
+                {
+                    AddParent(parent, child);
+
+                    var grandchild = sqlServerContext.Categories
+                        .Include(c => c.ParentCategory)
+                        .FirstOrDefault(c => c.ParentCategoryId == categoryEntity.ParentCategoryId);
                 }
             }
 
-            sqlServerContext.SaveChanges();
-        }
+            return dictionarieCategories;
 
-        public Task<CategoryModel> GetCategoryByIdAsync(int categoryId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Dictionary<string, object> GetCategoryHierarchy()
-        {
-            var categoryHierarchy = new Dictionary<string, object>();
-            var rootCategories = sqlServerContext.Categories
-                .Where(c => !sqlServerContext.CategoryHierarchies.Any(ch => ch.ChildCategoryId == c.Id))
-                .ToList();
-
-            foreach (var rootCategory in rootCategories)
-            {
-                var hierarchy = GenerateHierarchy(rootCategory);
-                categoryHierarchy[rootCategory.Name] = hierarchy;
-            }
-
-            return categoryHierarchy;
-        }
-
-        public Task<IEnumerable<CategoryModel>> GetList()
-        {
-            throw new NotImplementedException();
-        }
-
-        private Dictionary<string, object> GenerateHierarchy(CategoryEntity category)
-        {
-            var hierarchy = new Dictionary<string, object>();
-            var childCategories = sqlServerContext.CategoryHierarchies
-                .Where(ch => ch.ParentCategoryId == category.Id)
-                .Select(ch => ch.ChildCategory)
-                .ToList();
-
-            foreach (var childCategory in childCategories)
-            {
-                var childHierarchy = GenerateHierarchy(childCategory);
-                hierarchy[childCategory.Name] = childHierarchy;
-            }
-
-            return hierarchy;
         }
     }
 }

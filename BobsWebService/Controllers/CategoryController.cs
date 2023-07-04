@@ -2,11 +2,14 @@
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using BobsWebService.ExtensionMethods.SimpleValidator;
 
 namespace BobsWebService.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Authorize]
+    [Route("api/v1/[controller]")]
     public class CategoryController : Controller
     {
         private readonly ICategoryManagementService categoryManagementService;
@@ -16,27 +19,13 @@ namespace BobsWebService.Controllers
         }
 
         [HttpGet]
-        [Route("{id}")]
-        public ActionResult Details(int id)
-        {
-            return Ok(default);
-        }
-
-        [HttpGet]
-        [Route("")]
-        public ActionResult GetList()
-        {
-            return Ok(default);
-        }
-
-        [HttpPost("categories")]
-        
-        public async Task<IActionResult> CreateCategory([FromBody] Dictionary<string, string> categoryDictionary)
+        [Route("{categoryName}")]
+        public async Task<ActionResult> Details(string categoryName)
         {
             try
             {
-                await categoryManagementService.Create(categoryDictionary);
-                return Ok();
+                var result = categoryManagementService.GetCategory(categoryName);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -45,18 +34,25 @@ namespace BobsWebService.Controllers
             }
         }
 
-        [HttpPut]
-        [Route("{id}")]
-        public ActionResult Edit(int id)
+        [HttpPost("")]
+        
+        public async Task<IActionResult> CreateCategory([FromBody] Dictionary<string, string> categoryDictionary)
         {
-            return Ok(default);
-        }
+            try
+            {
+                if(categoryDictionary == null || categoryDictionary.IsValid()) 
+                {
+                    return BadRequest("Payload invalid, please send with MAX LENGHT of 300 KEY and VALUE");
+                }
 
-        [HttpDelete]
-        [Route("")]
-        public ActionResult Delete(int id)
-        {
-            return Ok(default);
+                await categoryManagementService.CreateCategory(categoryDictionary);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during the processing
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using Domain.Interfaces.Repository;
-using Infra.SqlServer.Context;
-using Infra.SqlServer.Repositories;
+﻿using Infra.SqlServer.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,9 +21,7 @@ namespace Infra.SqlServer.DepedencyInjections.ExtensionMethods
                 options.UseSqlServer(connectionString, sqlServerOptions =>
                 {
                     sqlServerOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-                }))
-                .AddScoped<ICategoryRepository, CategoryRepository>()
-                .AddScoped<ICategoryHierarchiesRepository, CategoryHierarchiesRepository>();
+                }));
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Domain.Interfaces.Service;
 using Domain.Service.Service;
-using Infra.SqlServer.Context;
-using Microsoft.Extensions.Configuration;
+using Domain.Service.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -11,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace Domain.Service.DependencyInjections.ExtensionsMethods
 {
-    public static class CategoryServiceExtensionMethod
+    public static class UserAuthServiceExtension
     {
-        public static IServiceCollection AddCategoryService(
+        public static IServiceCollection AddUserAuth(
             this IServiceCollection services)
         {
             return services
-                .AddScoped<ICategoryManagementService, CategoryManagementService>();
+                .AddScoped<IUserAuthService, UserAuthService>();
         }
     }
 }
