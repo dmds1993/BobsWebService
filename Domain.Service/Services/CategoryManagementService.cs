@@ -34,31 +34,25 @@ namespace Domain.Service.Service
                 var categoryName = categoryEntry.Key;
                 var parentCategoryName = categoryEntry.Value;
 
-                var category = sqlServerContext.Categories.FirstOrDefault(c => c.Name == categoryName);
+                var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
 
                 if (category == null)
                 {
-                    category = new CategoryEntity { Name = categoryName };
-                    sqlServerContext.Add(category);
+                    category = new CategoryEntity { CategoryName = categoryName };
+                    sqlServerContext.Categories.Add(category);
                 }
 
                 if (!string.IsNullOrEmpty(parentCategoryName))
                 {
-                    var parentCategory = sqlServerContext.Categories.FirstOrDefault(c => c.Name == parentCategoryName);
+                    var parentCategory = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == parentCategoryName);
 
                     if (parentCategory == null)
                     {
-                        parentCategory = new CategoryEntity { Name = parentCategoryName };
+                        parentCategory = new CategoryEntity { CategoryName = parentCategoryName };
                         sqlServerContext.Categories.Add(parentCategory);
                     }
 
-                    var categoryHierarchy = new CategoryHierarchyEntity
-                    {
-                        ParentCategoryId = parentCategory.Id,
-                        ChildCategoryId = parentCategory.Id
-                    };
-
-                    sqlServerContext.CategoryHierarchies.Add(categoryHierarchy);
+                    category.ParentCategoryId = parentCategory.CategoryId;
                 }
             }
 
@@ -74,13 +68,13 @@ namespace Domain.Service.Service
         {
             var categoryHierarchy = new Dictionary<string, object>();
             var rootCategories = sqlServerContext.Categories
-                .Where(c => !sqlServerContext.CategoryHierarchies.Any(ch => ch.ChildCategoryId == c.Id))
+                .Where(c => !sqlServerContext.Categories.Any(ch => ch.ParentCategoryId == c.CategoryId))
                 .ToList();
 
             foreach (var rootCategory in rootCategories)
             {
                 var hierarchy = GenerateHierarchy(rootCategory);
-                categoryHierarchy[rootCategory.Name] = hierarchy;
+                categoryHierarchy[rootCategory.CategoryName] = hierarchy;
             }
 
             return categoryHierarchy;
@@ -94,15 +88,14 @@ namespace Domain.Service.Service
         private Dictionary<string, object> GenerateHierarchy(CategoryEntity category)
         {
             var hierarchy = new Dictionary<string, object>();
-            var childCategories = sqlServerContext.CategoryHierarchies
-                .Where(ch => ch.ParentCategoryId == category.Id)
-                .Select(ch => ch.ChildCategory)
+            var childCategories = sqlServerContext.Categories
+                .Where(ch => ch.ParentCategoryId == category.CategoryId)
                 .ToList();
 
             foreach (var childCategory in childCategories)
             {
                 var childHierarchy = GenerateHierarchy(childCategory);
-                hierarchy[childCategory.Name] = childHierarchy;
+                hierarchy[childCategory.CategoryName] = childHierarchy;
             }
 
             return hierarchy;

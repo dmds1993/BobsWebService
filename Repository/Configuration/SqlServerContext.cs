@@ -14,28 +14,20 @@ namespace Infra.SqlServer.Context
         {
         }
         public DbSet<CategoryEntity> Categories { get; set; }
-        public DbSet<CategoryHierarchyEntity> CategoryHierarchies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<CategoryEntity>()
-                .HasIndex(c => c.Name)
-                .IsUnique();
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.ChildCategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .IsRequired(false);
 
-            modelBuilder.Entity<CategoryHierarchyEntity>()
-                .HasKey(ch => new { ch.ParentCategoryId, ch.ChildCategoryId });
-
-            modelBuilder.Entity<CategoryHierarchyEntity>()
-                .HasOne(ch => ch.ParentCategory)
-                .WithMany()
-                .HasForeignKey(ch => ch.ParentCategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<CategoryHierarchyEntity>()
-                .HasOne(ch => ch.ChildCategory)
-                .WithMany()
-                .HasForeignKey(ch => ch.ChildCategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<CategoryEntity>()
+                .HasMany(c => c.ChildCategories)
+                .WithOne(c => c.ParentCategory)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .IsRequired(false);
         }
     }
 }

@@ -12,10 +12,9 @@ namespace Domain.Entities
         [Column("CategoryId")]
         public int Id { get; set; }
         [Column("ParentCategoryId")]
-        public int ParentCategoryId { get; set; }
+        public int? ParentCategoryId { get; set; }
         [Column("CategoryId")]
-        public int ChildCategoryId { get; set; }
-
+        public int? ChildCategoryId { get; set; }
         public CategoryEntity ParentCategory { get; set; }
         public CategoryEntity ChildCategory { get; set; }
     }
