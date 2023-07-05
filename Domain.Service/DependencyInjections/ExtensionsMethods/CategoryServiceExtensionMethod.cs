@@ -1,8 +1,6 @@
-﻿using Domain.Interfaces.Repository;
-using Domain.Interfaces.Service;
+﻿using Domain.Interfaces.Service;
 using Domain.Service.Service;
 using Infra.SqlServer.Context;
-using Infra.SqlServer.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;

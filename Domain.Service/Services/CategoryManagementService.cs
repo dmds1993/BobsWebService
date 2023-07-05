@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using Domain.Interfaces.Repository;
 using Domain.Interfaces.Service;
 using Domain.Models;
 using Microsoft.Extensions.Logging;

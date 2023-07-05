@@ -1,6 +1,4 @@
-﻿using Domain.Interfaces.Repository;
-using Infra.SqlServer.Context;
-using Infra.SqlServer.Repositories;
+﻿using Infra.SqlServer.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
