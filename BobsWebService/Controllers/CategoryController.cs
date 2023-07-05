@@ -3,7 +3,7 @@ using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-
+using BobsWebService.ExtensionMethods.SimpleValidator;
 
 namespace BobsWebService.Controllers
 {
@@ -40,6 +40,11 @@ namespace BobsWebService.Controllers
         {
             try
             {
+                if(categoryDictionary == null || categoryDictionary.IsValid()) 
+                {
+                    return BadRequest("Payload invalid, please send with MAX LENGHT of 300 KEY and VALUE");
+                }
+
                 await categoryManagementService.CreateCategory(categoryDictionary);
                 return Ok();
             }

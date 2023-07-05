@@ -4,7 +4,7 @@ IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'Categories')
 BEGIN
     CREATE TABLE Categories (
         CategoryId INT PRIMARY KEY IDENTITY(1,1),
-        CategoryName VARCHAR(100) NOT NULL,
+        CategoryName VARCHAR(300) NOT NULL,
         ParentCategoryId INT,
         [Level] [int] NOT NULL,
         CONSTRAINT FK_Categories_ParentCategory
