@@ -111,24 +111,26 @@ namespace Domain.Service.Service
                 return null;
             }
 
-            dictionarieCategories.Add(category.CategoryName, new Dictionary<string, object>());
+            var parent = new Dictionary<string, object>();
+
+            dictionarieCategories.Add(category.CategoryName, parent);
 
             if (category.ChildCategories != null && category.ChildCategories.Any())
             {
-                foreach(var child in category.ChildCategories)
+                foreach (var child in category.ChildCategories)
                 {
+                    AddParent(parent, child);
+
                     var grandchild = sqlServerContext.Categories
                         .Include(c => c.ParentCategory)
-                        .FirstOrDefault(c => c.CategoryId == child.ParentCategoryId);
+                        .FirstOrDefault(c => c.ParentCategoryId == category.ParentCategoryId);
 
-                    var parent = new Dictionary<string, object>();
-                    
-                    if(grandchild != null) 
+
+                    if (grandchild != null) 
                     {
                         NextParent(parent, grandchild.ParentCategory);
                     }
 
-                    dictionarieCategories[child.CategoryName] = parent;
                 }
             }
 
@@ -141,6 +143,22 @@ namespace Domain.Service.Service
             //};
 
             return dictionarieCategories;
+        }
+
+        public void AddParent(Dictionary<string, object> parent, CategoryEntity child)
+        {
+            var newParent = new Dictionary<string, object>();
+
+            parent.Add(child.CategoryName, newParent);
+
+            var category = sqlServerContext.Categories
+                .Include(c => c.ChildCategories)
+                .FirstOrDefault(c => c.ParentCategoryId == child.CategoryId);
+
+            if(category != null) 
+            {
+                AddParent(newParent, category);
+            }
         }
 
         private void NextParent(Dictionary<string, object> parent, CategoryEntity parentCategory)
