@@ -9,7 +9,7 @@ namespace BobsWebService.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("[controller]")]
+    [Route("api/v1/[controller]")]
     public class CategoryController : Controller
     {
         private readonly ICategoryManagementService categoryManagementService;

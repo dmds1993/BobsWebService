@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BobsWebService.Controllers
 {
-    [Route("auth")]
+    [Route("api/v1/auth")]
     public class AuthenticationController : Controller
     {
         private readonly IUserAuthService authService;

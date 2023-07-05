@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BobsWebService.Controllers
 {
+    [Route("api/v1/[controller]")]
     public class RegisterUserController : Controller
     {
         private readonly IUserAuthService userAuthService;
