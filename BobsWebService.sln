@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BobsWebService", "BobsWebSe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infra.SqlServer", "Repository\Infra.SqlServer.csproj", "{54D4B583-30E4-4151-BAF7-E2339DD504ED}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Services\Domain.csproj", "{F952DA1D-F2E1-469C-B73B-927BB6D32165}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{F952DA1D-F2E1-469C-B73B-927BB6D32165}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\UnitTests.csproj", "{A26AB84D-9ACF-4694-8F9C-1FC6A3C0E9CC}"
 EndProject
