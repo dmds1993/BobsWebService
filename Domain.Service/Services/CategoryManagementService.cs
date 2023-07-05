@@ -49,23 +49,23 @@ namespace Domain.Service.Service
         {
             foreach (var categoryEntry in categoryDictionary)
             {
-                var categoryName = categoryEntry.Key;
-                var child = categoryEntry.Value;
+                var parentCategoryName = categoryEntry.Key;
+                var childCategoryName = categoryEntry.Value;
 
-                var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
+                var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == parentCategoryName);
 
                 if (category == null)
                 {
-                    category = new CategoryEntity { CategoryName = categoryName, Level = INITIAL_LEVEL };
+                    category = new CategoryEntity { CategoryName = parentCategoryName, Level = INITIAL_LEVEL };
                 }
 
-                if (!string.IsNullOrEmpty(child))
+                if (!string.IsNullOrEmpty(childCategoryName))
                 {
                     var newChild = new CategoryEntity
                     {
                         Level = category.NewLevel(),
                         ParentCategoryId = category.CategoryId,
-                        CategoryName = child
+                        CategoryName = childCategoryName
                     };
 
                     category.AddNewChild(newChild);
