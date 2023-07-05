@@ -23,9 +23,7 @@ namespace Infra.SqlServer.DepedencyInjections.ExtensionMethods
                 options.UseSqlServer(connectionString, sqlServerOptions =>
                 {
                     sqlServerOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-                }))
-                .AddScoped<ICategoryRepository, CategoryRepository>()
-                .AddScoped<ICategoryHierarchiesRepository, CategoryHierarchiesRepository>();
+                }));
         }
     }
 }
