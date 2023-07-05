@@ -14,9 +14,25 @@ namespace Infra.SqlServer.Context
         {
         }
         public DbSet<CategoryEntity> Categories { get; set; }
+        public DbSet<UserEntity> UserEntity { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<UserEntity>()
+                .ToTable("Users")
+                .HasKey(u => u.Id);
+
+            modelBuilder.Entity<UserEntity>()
+                .Property(u => u.Username)
+                .IsRequired()
+                .HasMaxLength(255);
+
+            modelBuilder.Entity<UserEntity>()
+                .Property(u => u.HashedPassword)
+                .IsRequired()
+                .HasMaxLength(255);
+
             modelBuilder.Entity<CategoryEntity>()
                 .HasOne(c => c.ParentCategory)
                 .WithMany(c => c.ChildCategories)

@@ -10,7 +10,7 @@ namespace Domain.Interfaces.Service
 {
     public interface ICategoryManagementService
     {
-        Task Create(Dictionary<string, string> categoryDictionary);
-        Dictionary<string, object> GetCategory(int categoryId);
+        Task CreateCategory(Dictionary<string, string> categoryDictionary);
+        Dictionary<string, object> GetCategory(string categoryName);
     }
 }

@@ -2,10 +2,13 @@
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace BobsWebService.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("[controller]")]
     public class CategoryController : Controller
     {
@@ -17,11 +20,11 @@ namespace BobsWebService.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<ActionResult> Details(int id)
+        public async Task<ActionResult> Details(string categoryName)
         {
             try
             {
-                var result = categoryManagementService.GetCategory(id);
+                var result = categoryManagementService.GetCategory(categoryName);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -31,20 +34,13 @@ namespace BobsWebService.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("")]
-        public ActionResult GetList()
-        {
-            return Ok(default);
-        }
-
-        [HttpPost("categories")]
+        [HttpPost("")]
         
         public async Task<IActionResult> CreateCategory([FromBody] Dictionary<string, string> categoryDictionary)
         {
             try
             {
-                await categoryManagementService.Create(categoryDictionary);
+                await categoryManagementService.CreateCategory(categoryDictionary);
                 return Ok();
             }
             catch (Exception ex)
@@ -52,20 +48,6 @@ namespace BobsWebService.Controllers
                 // Handle any exceptions that occur during the processing
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
-        }
-
-        [HttpPut]
-        [Route("{id}")]
-        public ActionResult Edit(int id)
-        {
-            return Ok(default);
-        }
-
-        [HttpDelete]
-        [Route("")]
-        public ActionResult Delete(int id)
-        {
-            return Ok(default);
         }
     }
 }
