@@ -29,34 +29,43 @@ namespace Domain.Service.Service
 
         public async Task Create(Dictionary<string, string> categoryDictionary)
         {
-            foreach (var categoryEntry in categoryDictionary)
+            //categoria ja existe
+            //novo filho
+            var executionStrategy = sqlServerContext.Database.CreateExecutionStrategy();
+
+            executionStrategy.Execute(() => 
             {
-                var categoryName = categoryEntry.Key;
-                var parentCategoryName = categoryEntry.Value;
+                using var transaction = sqlServerContext.Database.BeginTransaction();
 
-                var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
-
-                if (category == null)
+                foreach (var categoryEntry in categoryDictionary)
                 {
-                    category = new CategoryEntity { CategoryName = categoryName };
-                    sqlServerContext.Categories.Add(category);
-                }
+                    var categoryName = categoryEntry.Key;
+                    var children = categoryEntry.Value;
 
-                if (!string.IsNullOrEmpty(parentCategoryName))
-                {
-                    var parentCategory = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == parentCategoryName);
+                    var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
 
-                    if (parentCategory == null)
+                    if (category == null)
                     {
-                        parentCategory = new CategoryEntity { CategoryName = parentCategoryName };
-                        sqlServerContext.Categories.Add(parentCategory);
+                        category = new CategoryEntity { CategoryName = categoryName };
                     }
 
-                    category.ParentCategoryId = parentCategory.CategoryId;
-                }
-            }
+                    if (!string.IsNullOrEmpty(children))
+                    {
+                        var newChild = new CategoryEntity
+                        {
+                            ParentCategoryId = category.CategoryId,
+                            CategoryName = children
+                        };
 
-            sqlServerContext.SaveChanges();
+                        category.AddNewChild(newChild);
+                    }
+
+                    sqlServerContext.Categories.Update(category);
+                    sqlServerContext.SaveChanges();
+                }
+
+                transaction.Commit();
+            });
         }
 
         public Task<CategoryModel> GetCategoryByIdAsync(int categoryId)
@@ -99,6 +108,28 @@ namespace Domain.Service.Service
             }
 
             return hierarchy;
+        }
+
+        private int GetCategoryDepth(int categoryId)
+        {
+            var category = sqlServerContext.Categories.Find(categoryId);
+
+            if (category == null)
+            {
+                return 0;
+            }
+
+            int depth = 0;
+            var parentCategoryId = category.ParentCategoryId;
+
+            while (parentCategoryId != null)
+            {
+                depth++;
+                category = sqlServerContext.Categories.Find(parentCategoryId.Value);
+                parentCategoryId = category.ParentCategoryId;
+            }
+
+            return depth;
         }
     }
 }
