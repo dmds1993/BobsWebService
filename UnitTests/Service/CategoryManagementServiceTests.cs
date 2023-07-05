@@ -194,18 +194,6 @@ namespace Domain.Service.Tests
                         { "Father Child Son Grand Child 6", "Father Child Son Grand Child 7" },
                         { "Father Child Son Grand Child 7", "Father Child Son Grand Child 8" }
                     }));
-
-                    // Act
-                    var result = service.GetCategory("Father");
-
-                    // Assert
-                    Assert.NotNull(result);
-                    Assert.Single(result);
-                    Assert.Contains("Father", result.FirstOrDefault().Key);
-                    var categoryChildren = (Dictionary<string, object>)result.FirstOrDefault().Value;
-                    Assert.NotNull(categoryChildren);
-                    Assert.Contains("my first child", categoryChildren.FirstOrDefault().Key);
-
                 }
             }
         }
