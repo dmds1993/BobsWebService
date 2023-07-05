@@ -15,7 +15,7 @@ namespace BobsWebService.Controllers
             this.userAuthService = userAuthService;
         }
 
-        [HttpPost("/api/register")]
+        [HttpPost("")]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegisterModel userRegisterModel)
         {
             try
