@@ -17,9 +17,18 @@ namespace BobsWebService.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return Ok(default);
+            try
+            {
+                var result = categoryManagementService.GetCategory(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during the processing
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
 
         [HttpGet]

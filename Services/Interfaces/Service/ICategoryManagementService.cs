@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using Domain.Entities;
+using Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,7 @@ namespace Domain.Interfaces.Service
 {
     public interface ICategoryManagementService
     {
-        Task<CategoryModel> GetCategoryByIdAsync(int categoryId);
-        Task<IEnumerable<CategoryModel>> GetList();
         Task Create(Dictionary<string, string> categoryDictionary);
+        Dictionary<string, object> GetCategory(int categoryId);
     }
 }

@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Infra.SqlServer.Context;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Domain.Service.Service
 {
@@ -73,26 +75,167 @@ namespace Domain.Service.Service
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, object> GetCategoryHierarchy()
-        {
-            var categoryHierarchy = new Dictionary<string, object>();
-            var rootCategories = sqlServerContext.Categories
-                .Where(c => !sqlServerContext.Categories.Any(ch => ch.ParentCategoryId == c.CategoryId))
-                .ToList();
+        //public async Task<CategoryEntity> GetCategory(int categoryId)
+        //{
+        //    var options = new JsonSerializerOptions
+        //    {
+        //        ReferenceHandler = ReferenceHandler.Preserve
+        //    };
 
-            foreach (var rootCategory in rootCategories)
+        //    var category = await sqlServerContext.Categories
+        //        .Include(c => c.ChildCategories)
+        //        .Include(c => c.ParentCategory)
+        //        .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
+
+        //    if (category == null)
+        //        return default;
+
+        //    //await AddChildAndParentCategories(category, category);
+
+        //    var json = JsonSerializer.Serialize(category, options);
+        //    var result = JsonSerializer.Deserialize<CategoryEntity>(json, options);
+
+        //    return result;
+        //}
+
+        public Dictionary<string, object> GetCategory(int categoryId)
+        {
+            var category = sqlServerContext.Categories
+                .Include(c => c.ChildCategories)
+                .FirstOrDefault(c => c.CategoryId == categoryId);
+
+            var dictionarieCategories = new Dictionary<string, object>();
+
+            if (category == null)
             {
-                var hierarchy = GenerateHierarchy(rootCategory);
-                categoryHierarchy[rootCategory.CategoryName] = hierarchy;
+                return null;
             }
 
-            return categoryHierarchy;
+            dictionarieCategories.Add(category.CategoryName, new Dictionary<string, object>());
+
+            if (category.ChildCategories != null && category.ChildCategories.Any())
+            {
+                foreach(var child in category.ChildCategories)
+                {
+                    var grandchild = sqlServerContext.Categories
+                        .Include(c => c.ParentCategory)
+                        .FirstOrDefault(c => c.CategoryId == child.ParentCategoryId);
+
+                    var parent = new Dictionary<string, object>();
+                    
+                    if(grandchild != null) 
+                    {
+                        NextParent(parent, grandchild.ParentCategory);
+                    }
+
+                    dictionarieCategories[child.CategoryName] = parent;
+                }
+            }
+
+
+            //var categoryModel = new CategoryEntity
+            //{
+            //    CategoryName = category.CategoryName,
+            //    ParentCategory = GetParentCategories(category),
+            //    ChildCategories = GetChildCategories(category.ChildCategories)
+            //};
+
+            return dictionarieCategories;
         }
 
-        public Task<IEnumerable<CategoryModel>> GetList()
+        private void NextParent(Dictionary<string, object> parent, CategoryEntity parentCategory)
         {
-            throw new NotImplementedException();
+            var newParent = new Dictionary<string, object>();
+
+            if (parentCategory == null)
+                return;
+
+            var parentEntity = sqlServerContext.Categories
+                        .Include(c => c.ParentCategory)
+                        .FirstOrDefault(c => c.ParentCategoryId == parentCategory.ParentCategoryId);
+
+            while(parentEntity != null) 
+            {
+                newParent.Add(parentEntity.CategoryName, new Dictionary<string, object>());
+
+                foreach (var child in parentEntity.ChildCategories)
+                {
+                    var grandChild = sqlServerContext.Categories
+                        .Include(c => c.ParentCategory)
+                        .FirstOrDefault(c => c.CategoryId == child.CategoryId);
+
+                    var parentCategorie = new Dictionary<string, object>();
+
+                    if (grandChild != null)
+                    {
+                        NextParent(newParent, grandChild);
+                    }
+
+                    newParent[child.CategoryName] = parentCategorie;
+
+                    parentEntity = sqlServerContext.Categories
+                        .Include(c => c.ParentCategory)
+                        .FirstOrDefault(c => c.CategoryId == child.CategoryId);
+                }
+            }
+
         }
+
+        private CategoryEntity GetParentCategories(CategoryEntity category)
+        {
+            var parentCategories = new CategoryEntity();
+
+            if (category.ParentCategory != null)
+            {
+                var categoryEntity = new CategoryEntity
+                {
+                    CategoryName = category.ParentCategory.CategoryName,
+                    ParentCategory = GetParentCategories(category.ParentCategory),
+                    ChildCategories = GetChildCategories(category.ParentCategory.ChildCategories)
+                };
+            }
+
+            return parentCategories;
+        }
+
+        private List<CategoryEntity> GetChildCategories(List<CategoryEntity> childCategories)
+        {
+            var childCategoryModels = new List<CategoryEntity>();
+
+            if (childCategories != null)
+            {
+                foreach (var childCategory in childCategories)
+                {
+                    var childCategoryModel = new CategoryEntity
+                    {
+                        CategoryName = childCategory.CategoryName,
+                        ParentCategory = GetParentCategories(childCategory),
+                        ChildCategories = GetChildCategories(childCategory.ChildCategories)
+                    };
+
+                    childCategoryModels.Add(childCategoryModel);
+                }
+            }
+
+            return childCategoryModels;
+        }
+
+        private async Task AddChildAndParentCategories(CategoryEntity category, CategoryEntity categoryEntity)
+        {
+            if (category.ParentCategoryId.HasValue)
+            {
+                var parentCategory = await sqlServerContext.Categories.FirstOrDefaultAsync(c => c.CategoryId == category.ParentCategoryId);
+                if (parentCategory != null)
+                    await AddChildAndParentCategories(parentCategory, category);
+            }
+
+            if (category.ChildCategories != null)
+            {
+                foreach (var childCategory in category.ChildCategories)
+                    await AddChildAndParentCategories(childCategory, category);
+            }
+        }
+
 
         private Dictionary<string, object> GenerateHierarchy(CategoryEntity category)
         {
@@ -113,7 +256,7 @@ namespace Domain.Service.Service
         private int GetCategoryDepth(int categoryId)
         {
             var category = sqlServerContext.Categories.Find(categoryId);
-
+                
             if (category == null)
             {
                 return 0;
