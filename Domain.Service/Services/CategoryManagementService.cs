@@ -32,8 +32,6 @@ namespace Domain.Service.Service
 
         public async Task Create(Dictionary<string, string> categoryDictionary)
         {
-            //categoria ja existe
-            //novo filho
             var executionStrategy = sqlServerContext.Database.CreateExecutionStrategy();
 
             executionStrategy.Execute(() => 
@@ -72,34 +70,6 @@ namespace Domain.Service.Service
             });
         }
 
-        public Task<CategoryModel> GetCategoryByIdAsync(int categoryId)
-        {
-            throw new NotImplementedException();
-        }
-
-        //public async Task<CategoryEntity> GetCategory(int categoryId)
-        //{
-        //    var options = new JsonSerializerOptions
-        //    {
-        //        ReferenceHandler = ReferenceHandler.Preserve
-        //    };
-
-        //    var category = await sqlServerContext.Categories
-        //        .Include(c => c.ChildCategories)
-        //        .Include(c => c.ParentCategory)
-        //        .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
-
-        //    if (category == null)
-        //        return default;
-
-        //    //await AddChildAndParentCategories(category, category);
-
-        //    var json = JsonSerializer.Serialize(category, options);
-        //    var result = JsonSerializer.Deserialize<CategoryEntity>(json, options);
-
-        //    return result;
-        //}
-
         public Dictionary<string, object> GetCategory(int categoryId)
         {
             var category = sqlServerContext.Categories
@@ -126,25 +96,8 @@ namespace Domain.Service.Service
                     var grandchild = sqlServerContext.Categories
                         .Include(c => c.ParentCategory)
                         .FirstOrDefault(c => c.ParentCategoryId == category.ParentCategoryId);
-
-
-                    //if (grandchild != null) 
-                    //{
-                    //    NextParent(parent, grandchild.ParentCategory);
-                    //}
-
                 }
             }
-
-            var total = GetCategoryDepth(categoryId);
-            Console.WriteLine(total);
-
-            //var categoryModel = new CategoryEntity
-            //{
-            //    CategoryName = category.CategoryName,
-            //    ParentCategory = GetParentCategories(category),
-            //    ChildCategories = GetChildCategories(category.ChildCategories)
-            //};
 
             return dictionarieCategories;
         }
@@ -163,122 +116,6 @@ namespace Domain.Service.Service
             {
                 AddParent(newParent, category);
             }
-        }
-
-        private void NextParent(Dictionary<string, object> parent, CategoryEntity parentCategory)
-        {
-            var newParent = new Dictionary<string, object>();
-
-            if (parentCategory == null)
-                return;
-
-            var parentEntity = sqlServerContext.Categories
-                        .Include(c => c.ParentCategory)
-                        .FirstOrDefault(c => c.ParentCategoryId == parentCategory.ParentCategoryId);
-
-            while(parentEntity != null) 
-            {
-                newParent.Add(parentEntity.CategoryName, new Dictionary<string, object>());
-
-                foreach (var child in parentEntity.ChildCategories)
-                {
-                    var grandChild = sqlServerContext.Categories
-                        .Include(c => c.ParentCategory)
-                        .FirstOrDefault(c => c.CategoryId == child.CategoryId);
-
-                    var parentCategorie = new Dictionary<string, object>();
-
-                    if (grandChild != null)
-                    {
-                        NextParent(newParent, grandChild);
-                    }
-
-                    newParent[child.CategoryName] = parentCategorie;
-
-                    parentEntity = sqlServerContext.Categories
-                        .Include(c => c.ParentCategory)
-                        .FirstOrDefault(c => c.CategoryId == child.CategoryId);
-                }
-            }
-
-        }
-
-        private CategoryEntity GetParentCategories(CategoryEntity category)
-        {
-            var parentCategories = new CategoryEntity();
-
-            if (category.ParentCategory != null)
-            {
-                var categoryEntity = new CategoryEntity
-                {
-                    CategoryName = category.ParentCategory.CategoryName,
-                    ParentCategory = GetParentCategories(category.ParentCategory),
-                    ChildCategories = GetChildCategories(category.ParentCategory.ChildCategories)
-                };
-            }
-
-            return parentCategories;
-        }
-
-        private List<CategoryEntity> GetChildCategories(List<CategoryEntity> childCategories)
-        {
-            var childCategoryModels = new List<CategoryEntity>();
-
-            if (childCategories != null)
-            {
-                foreach (var childCategory in childCategories)
-                {
-                    var childCategoryModel = new CategoryEntity
-                    {
-                        CategoryName = childCategory.CategoryName,
-                        ParentCategory = GetParentCategories(childCategory),
-                        ChildCategories = GetChildCategories(childCategory.ChildCategories)
-                    };
-
-                    childCategoryModels.Add(childCategoryModel);
-                }
-            }
-
-            return childCategoryModels;
-        }
-
-
-        private Dictionary<string, object> GenerateHierarchy(CategoryEntity category)
-        {
-            var hierarchy = new Dictionary<string, object>();
-            var childCategories = sqlServerContext.Categories
-                .Where(ch => ch.ParentCategoryId == category.CategoryId)
-                .ToList();
-
-            foreach (var childCategory in childCategories)
-            {
-                var childHierarchy = GenerateHierarchy(childCategory);
-                hierarchy[childCategory.CategoryName] = childHierarchy;
-            }
-
-            return hierarchy;
-        }
-
-        private int GetCategoryDepth(int categoryId)
-        {
-            var category = sqlServerContext.Categories.Find(categoryId);
-                
-            if (category == null)
-            {
-                return 0;
-            }
-
-            int depth = 0;
-            var parentCategoryId = category.ParentCategoryId;
-
-            while (parentCategoryId != null)
-            {
-                depth++;
-                category = sqlServerContext.Categories.Find(parentCategoryId.Value);
-                parentCategoryId = category.ParentCategoryId;
-            }
-
-            return depth;
         }
     }
 }
