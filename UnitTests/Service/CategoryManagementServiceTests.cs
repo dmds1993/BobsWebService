@@ -34,7 +34,7 @@ namespace Domain.Service.Tests
 
             var mockLogger = new Mock<ILogger<CategoryManagementService>>();
             var mockContextOptions = new DbContextOptionsBuilder<SqlServerContext>()
-                .UseInMemoryDatabase(databaseName: "BOBS_DATABASE")
+                .UseInMemoryDatabase(databaseName: GetDatabaseName())
                 .Options;
 
             using (var context = new SqlServerContext(mockContextOptions))
@@ -84,6 +84,11 @@ namespace Domain.Service.Tests
             }
         }
 
+        private string GetDatabaseName()
+        {
+            return $"{Guid.NewGuid()}-BOBS_DATABASE";
+        }
+
         [Fact]
         public void Create_Should_AddCategoriesToDatabase_AndValidateLevel()
         {
@@ -97,7 +102,7 @@ namespace Domain.Service.Tests
             var categoryId = 1;
             var mockLogger = new Mock<ILogger<CategoryManagementService>>();
             var mockContextOptions = new DbContextOptionsBuilder<SqlServerContext>()
-                .UseInMemoryDatabase(databaseName: "BOBS_DATABASE")
+                .UseInMemoryDatabase(databaseName: GetDatabaseName())
                 .Options;
 
             using (var context = new SqlServerContext(mockContextOptions))
@@ -155,7 +160,7 @@ namespace Domain.Service.Tests
             var categoryId = 1;
             var mockLogger = new Mock<ILogger<CategoryManagementService>>();
             var mockContextOptions = new DbContextOptionsBuilder<SqlServerContext>()
-                .UseInMemoryDatabase(databaseName: "BOBS_DATABASE")
+                .UseInMemoryDatabase(databaseName: GetDatabaseName())
                 .Options;
 
             using (var context = new SqlServerContext(mockContextOptions))
