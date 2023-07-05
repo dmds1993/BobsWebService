@@ -19,7 +19,7 @@ namespace BobsWebService.Controllers
         }
 
         [HttpGet]
-        [Route("{id}")]
+        [Route("{categoryName}")]
         public async Task<ActionResult> Details(string categoryName)
         {
             try
