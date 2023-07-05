@@ -50,7 +50,7 @@ namespace Domain.Service.Service
             foreach (var categoryEntry in categoryDictionary)
             {
                 var categoryName = categoryEntry.Key;
-                var children = categoryEntry.Value;
+                var child = categoryEntry.Value;
 
                 var category = sqlServerContext.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
 
@@ -59,13 +59,13 @@ namespace Domain.Service.Service
                     category = new CategoryEntity { CategoryName = categoryName, Level = INITIAL_LEVEL };
                 }
 
-                if (!string.IsNullOrEmpty(children))
+                if (!string.IsNullOrEmpty(child))
                 {
                     var newChild = new CategoryEntity
                     {
                         Level = category.NewLevel(),
                         ParentCategoryId = category.CategoryId,
-                        CategoryName = children
+                        CategoryName = child
                     };
 
                     category.AddNewChild(newChild);
