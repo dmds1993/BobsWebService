@@ -20,7 +20,8 @@ namespace Domain.Service.Service
     {
         private readonly SqlServerContext sqlServerContext;
         private readonly ILogger<CategoryManagementService> logger;
-
+        private static int INITIAL_LEVEL = 1;
+        
         public CategoryManagementService(
             SqlServerContext sqlServerContext,
             ILogger<CategoryManagementService> logger)
@@ -48,13 +49,14 @@ namespace Domain.Service.Service
 
                     if (category == null)
                     {
-                        category = new CategoryEntity { CategoryName = categoryName };
+                        category = new CategoryEntity { CategoryName = categoryName, Level = INITIAL_LEVEL };
                     }
 
                     if (!string.IsNullOrEmpty(children))
                     {
                         var newChild = new CategoryEntity
                         {
+                            Level = category.NewLevel(),
                             ParentCategoryId = category.CategoryId,
                             CategoryName = children
                         };
@@ -126,14 +128,16 @@ namespace Domain.Service.Service
                         .FirstOrDefault(c => c.ParentCategoryId == category.ParentCategoryId);
 
 
-                    if (grandchild != null) 
-                    {
-                        NextParent(parent, grandchild.ParentCategory);
-                    }
+                    //if (grandchild != null) 
+                    //{
+                    //    NextParent(parent, grandchild.ParentCategory);
+                    //}
 
                 }
             }
 
+            var total = GetCategoryDepth(categoryId);
+            Console.WriteLine(total);
 
             //var categoryModel = new CategoryEntity
             //{
@@ -236,22 +240,6 @@ namespace Domain.Service.Service
             }
 
             return childCategoryModels;
-        }
-
-        private async Task AddChildAndParentCategories(CategoryEntity category, CategoryEntity categoryEntity)
-        {
-            if (category.ParentCategoryId.HasValue)
-            {
-                var parentCategory = await sqlServerContext.Categories.FirstOrDefaultAsync(c => c.CategoryId == category.ParentCategoryId);
-                if (parentCategory != null)
-                    await AddChildAndParentCategories(parentCategory, category);
-            }
-
-            if (category.ChildCategories != null)
-            {
-                foreach (var childCategory in category.ChildCategories)
-                    await AddChildAndParentCategories(childCategory, category);
-            }
         }
 
 

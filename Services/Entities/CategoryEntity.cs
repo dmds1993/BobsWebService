@@ -13,6 +13,7 @@ namespace Domain.Entities
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CategoryId { get; set; }
+        public int Level { get; set; }
         public string CategoryName { get; set; }
         public int? ParentCategoryId { get; set; }
         public CategoryEntity ParentCategory { get; set; }
@@ -23,6 +24,15 @@ namespace Domain.Entities
                 ChildCategories = new List<CategoryEntity>();
 
             ChildCategories.Add(category);
+        }
+
+        public int NewLevel()
+        {
+            if(Level <= 9)
+            {
+                return Level + 1;
+            }
+            throw new Exception("Limit level");
         }
     }
 }
