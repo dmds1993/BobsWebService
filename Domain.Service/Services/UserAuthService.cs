@@ -13,13 +13,14 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Principal;
-using Domain.Service.Constants;
 using Microsoft.Extensions.Configuration;
 
 namespace Domain.Service.Services
 {
     public class UserAuthService : IUserAuthService
     {
+        private static string UserId = "UserId";
+
         private readonly SqlServerContext sqlServerContext;
         private readonly IConfiguration configuration;
 
@@ -53,19 +54,15 @@ namespace Domain.Service.Services
                 return user?.CreateAuthWithError();
             }
 
-            // Create claims for the authenticated user
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(CustomClaimTypes.UserId, user.Id.ToString())
-                // Add additional claims as needed
+                new Claim(UserId, user.Id.ToString())
             };
 
-            // Get the secret key from configuration
             var secretKey = configuration["JwtSettings:SecretKey"];
             var signinKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
-            // Generate the token
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -73,7 +70,6 @@ namespace Domain.Service.Services
                 Expires = DateTime.UtcNow.AddHours(1), // Set the token expiration time
                 SigningCredentials = new SigningCredentials(signinKey, SecurityAlgorithms.HmacSha256)
             };
-
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var encodedToken = tokenHandler.WriteToken(token);
